@@ -11,20 +11,21 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// MYSQL CONNECTION
-// const db = mysql.createConnection({
-//   host: "process.env.localhost",
-//   user: "process.env.root",
-//   password: "process.env.divya",
-//   database: "process.env.test"
-// });
 const db = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT
+  host: process.env.MYSQLHOST,
+  user: process.env.MYSQLUSER,
+  password: process.env.MYSQLPASSWORD,
+  database: process.env.MYSQLDATABASE,
+  port: process.env.MYSQLPORT
 });
+
+// const db = mysql.createConnection({
+//   host: process.env.MYSQLHOST,
+//   user: process.env.DB_USER,
+//   password: process.env.DB_PASSWORD,
+//   database: process.env.DB_NAME,
+//   port: process.env.MYSQLPORT
+// });
 
 db.connect((err) => {
   if (err) console.log("DB Error:", err);
@@ -74,4 +75,4 @@ app.get("/history/:id", (req, res) => {
   );
 });
 
-app.listen(5000, () => console.log("Server running on port 5000"));
+app.listen(5001, () => console.log("Server running on port 5001"));
