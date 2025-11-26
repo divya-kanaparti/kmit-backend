@@ -75,6 +75,25 @@ app.get("/history/:id", (req, res) => {
     }
   );
 });
+app.get("/create-table", (req, res) => {
+  const query = `
+    CREATE TABLE IF NOT EXISTS uploaded_files (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      file_name VARCHAR(255),
+      json_data JSON,
+      uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+
+  db.query(query, (err) => {
+    if (err) {
+      console.log(err);
+      return res.status(500).send("Table creation failed");
+    }
+    res.send("Table created successfully!");
+  });
+});
+
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log("Server running on port " + PORT));
 
