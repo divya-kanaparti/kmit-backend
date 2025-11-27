@@ -1,104 +1,4 @@
 
-// import express from "express";
-// import cors from "cors";
-// import mysql from "mysql2";
-// import bodyParser from "body-parser";
-// import dotenv from "dotenv";
-// dotenv.config();
-
-
-// const app = express();
-// app.use(cors());
-// app.use(bodyParser.json());
-
-// const db = mysql.createConnection({
-//   host: process.env.MYSQLHOST,
-//   user: process.env.MYSQLUSER,
-//   password: process.env.MYSQLPASSWORD,
-//   database: process.env.MYSQLDATABASE,
-//   port: process.env.MYSQLPORT
-// });
-
-// // const db = mysql.createConnection({
-// //   host: process.env.MYSQLHOST,
-// //   user: process.env.DB_USER,
-// //   password: process.env.DB_PASSWORD,
-// //   database: process.env.DB_NAME,
-// //   port: process.env.MYSQLPORT
-// // });
-
-
-// db.connect((err) => {
-//   if (err) console.log("DB Error:", err);
-//   else console.log("MySQL Connected!");
-// });
-
-// // SAVE JSON INTO DB
-// app.post("/upload-json", (req, res) => {
-//   const { file_name, json_data } = req.body;
-
-//   const jsonString = JSON.stringify(json_data);
-
-//   db.query(
-//     "INSERT INTO uploaded_files (file_name, json_data) VALUES (?, ?)",
-//     [file_name, jsonString],
-//     (err) => {
-//       if (err) {
-//         console.log(err);
-//         return res.status(500).json({ message: "Database insert failed" });
-//       }
-//       res.json({ message: "Excel data saved successfully!" });
-//     }
-//   );
-// });
-
-// // HISTORY LIST API
-// app.get("/history", (req, res) => {
-//   db.query("SELECT id, file_name, uploaded_at FROM uploaded_files ORDER BY uploaded_at DESC",
-//     (err, result) => {
-//       if (err) return res.status(500).json({ message: "Failed to load history" });
-//       res.json(result);
-//     }
-//   );
-// });
-
-// // VIEW JSON API
-// app.get("/history/:id", (req, res) => {
-//   const fileId = req.params.id;
-
-//   db.query("SELECT json_data FROM uploaded_files WHERE id = ?", [fileId], 
-//     (err, result) => {
-//       if (err || result.length === 0) {
-//         return res.status(500).json({ message: "Failed to load file data" });
-//       }
-//       res.json(JSON.parse(result[0].json_data));
-//     }
-//   );
-// });
-// app.get("/create-table", (req, res) => {
-//   const query = `
-//     CREATE TABLE IF NOT EXISTS uploaded_files (
-//       id INT AUTO_INCREMENT PRIMARY KEY,
-//       file_name VARCHAR(255),
-//       json_data JSON,
-//       uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-//     );
-//   `;
-
-//   db.query(query, (err) => {
-//     if (err) {
-//       console.log(err);
-//       return res.status(500).send("Table creation failed");
-//     }
-//     res.send("Table created successfully!");
-//   });
-// });
-
-// const PORT = process.env.PORT || 5001;
-// app.listen(PORT, () => console.log("Server running on port " + PORT));
-
-
-
 import express from "express";
 import cors from "cors";
 import mysql from "mysql2";
@@ -106,11 +6,15 @@ import bodyParser from "body-parser";
 import dotenv from "dotenv";
 dotenv.config();
 
+
 const app = express();
 app.use(cors());
-app.use(bodyParser.json());
+// app.use(bodyParser.json());
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+app.use(bodyParser.json({ limit: "50mb" }));
+app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 
-// DB CONNECT
 const db = mysql.createConnection({
   host: process.env.MYSQLHOST,
   user: process.env.MYSQLUSER,
@@ -119,32 +23,21 @@ const db = mysql.createConnection({
   port: process.env.MYSQLPORT
 });
 
+// const db = mysql.createConnection({
+//   host: process.env.MYSQLHOST,
+//   user: process.env.DB_USER,
+//   password: process.env.DB_PASSWORD,
+//   database: process.env.DB_NAME,
+//   port: process.env.MYSQLPORT
+// });
+
+
 db.connect((err) => {
   if (err) console.log("DB Error:", err);
   else console.log("MySQL Connected!");
 });
 
-// --------------- CREATE TABLE ROUTE (this must be FIRST) ----------------
-app.get("/create-table", (req, res) => {
-  const query = `
-    CREATE TABLE IF NOT EXISTS uploaded_files (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      file_name VARCHAR(255),
-      json_data LONGTEXT,
-      uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-  `;
-
-  db.query(query, (err) => {
-    if (err) {
-      console.log("Table creation error:", err);
-      return res.status(500).send("Table creation failed");
-    }
-    res.send("Table created successfully!");
-  });
-});
-
-// ------------------ INSERT DATA ------------------
+// SAVE JSON INTO DB
 app.post("/upload-json", (req, res) => {
   const { file_name, json_data } = req.body;
 
@@ -155,7 +48,7 @@ app.post("/upload-json", (req, res) => {
     [file_name, jsonString],
     (err) => {
       if (err) {
-        console.log("Insert error:", err);
+        console.log(err);
         return res.status(500).json({ message: "Database insert failed" });
       }
       res.json({ message: "Excel data saved successfully!" });
@@ -163,10 +56,9 @@ app.post("/upload-json", (req, res) => {
   );
 });
 
-// ------------------ GET HISTORY ------------------
+// HISTORY LIST API
 app.get("/history", (req, res) => {
-  db.query(
-    "SELECT id, file_name, uploaded_at FROM uploaded_files ORDER BY uploaded_at DESC",
+  db.query("SELECT id, file_name, uploaded_at FROM uploaded_files ORDER BY uploaded_at DESC",
     (err, result) => {
       if (err) return res.status(500).json({ message: "Failed to load history" });
       res.json(result);
@@ -174,11 +66,11 @@ app.get("/history", (req, res) => {
   );
 });
 
-// ------------------ GET JSON DATA ------------------
+// VIEW JSON API
 app.get("/history/:id", (req, res) => {
   const fileId = req.params.id;
 
-  db.query("SELECT json_data FROM uploaded_files WHERE id = ?", [fileId],
+  db.query("SELECT json_data FROM uploaded_files WHERE id = ?", [fileId], 
     (err, result) => {
       if (err || result.length === 0) {
         return res.status(500).json({ message: "Failed to load file data" });
@@ -187,6 +79,118 @@ app.get("/history/:id", (req, res) => {
     }
   );
 });
+app.get("/create-table", (req, res) => {
+  const query = `
+    CREATE TABLE IF NOT EXISTS uploaded_files (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      file_name VARCHAR(255),
+      json_data JSON,
+      uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
 
-const PORT = process.env.PORT || 8080;
+  db.query(query, (err) => {
+    if (err) {
+      console.log(err);
+      return res.status(500).send("Table creation failed");
+    }
+    res.send("Table created successfully!");
+  });
+});
+
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log("Server running on port " + PORT));
+
+
+
+// import express from "express";
+// import cors from "cors";
+// import mysql from "mysql2";
+// import bodyParser from "body-parser";
+// import dotenv from "dotenv";
+// dotenv.config();
+
+// const app = express();
+// app.use(cors());
+// app.use(bodyParser.json());
+
+// // DB CONNECT
+// const db = mysql.createConnection({
+//   host: process.env.MYSQLHOST,
+//   user: process.env.MYSQLUSER,
+//   password: process.env.MYSQLPASSWORD,
+//   database: process.env.MYSQLDATABASE,
+//   port: process.env.MYSQLPORT
+// });
+
+// db.connect((err) => {
+//   if (err) console.log("DB Error:", err);
+//   else console.log("MySQL Connected!");
+// });
+
+// // --------------- CREATE TABLE ROUTE (this must be FIRST) ----------------
+// app.get("/create-table", (req, res) => {
+//   const query = `
+//     CREATE TABLE IF NOT EXISTS uploaded_files (
+//       id INT AUTO_INCREMENT PRIMARY KEY,
+//       file_name VARCHAR(255),
+//       json_data LONGTEXT,
+//       uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+//     );
+//   `;
+
+//   db.query(query, (err) => {
+//     if (err) {
+//       console.log("Table creation error:", err);
+//       return res.status(500).send("Table creation failed");
+//     }
+//     res.send("Table created successfully!");
+//   });
+// });
+
+// // ------------------ INSERT DATA ------------------
+// app.post("/upload-json", (req, res) => {
+//   const { file_name, json_data } = req.body;
+
+//   const jsonString = JSON.stringify(json_data);
+
+//   db.query(
+//     "INSERT INTO uploaded_files (file_name, json_data) VALUES (?, ?)",
+//     [file_name, jsonString],
+//     (err) => {
+//       if (err) {
+//         console.log("Insert error:", err);
+//         return res.status(500).json({ message: "Database insert failed" });
+//       }
+//       res.json({ message: "Excel data saved successfully!" });
+//     }
+//   );
+// });
+
+// // ------------------ GET HISTORY ------------------
+// app.get("/history", (req, res) => {
+//   db.query(
+//     "SELECT id, file_name, uploaded_at FROM uploaded_files ORDER BY uploaded_at DESC",
+//     (err, result) => {
+//       if (err) return res.status(500).json({ message: "Failed to load history" });
+//       res.json(result);
+//     }
+//   );
+// });
+
+// // ------------------ GET JSON DATA ------------------
+// app.get("/history/:id", (req, res) => {
+//   const fileId = req.params.id;
+
+//   db.query("SELECT json_data FROM uploaded_files WHERE id = ?", [fileId],
+//     (err, result) => {
+//       if (err || result.length === 0) {
+//         return res.status(500).json({ message: "Failed to load file data" });
+//       }
+//       res.json(JSON.parse(result[0].json_data));
+//     }
+//   );
+// });
+
+// const PORT = process.env.PORT || 8080;
+// app.listen(PORT, () => console.log("Server running on port " + PORT));
