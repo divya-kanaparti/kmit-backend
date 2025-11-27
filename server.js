@@ -57,6 +57,10 @@ app.post("/upload-json", (req, res) => {
 });
 
 // HISTORY LIST API
+app.get("/", (req, res) => {
+  res.send("Backend running successfully!");
+});
+
 app.get("/history", (req, res) => {
   db.query("SELECT id, file_name, uploaded_at FROM uploaded_files ORDER BY uploaded_at DESC",
     (err, result) => {
@@ -98,7 +102,7 @@ app.get("/create-table", (req, res) => {
   });
 });
 
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log("Server running on port " + PORT));
 
 
